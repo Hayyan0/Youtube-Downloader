@@ -13,6 +13,8 @@ autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 log.info('App starting...');
 
+autoUpdater.autoDownload = false;
+
 
 const store = new Store();
 
@@ -22,6 +24,28 @@ const ytdlpPath = path.join(ytdlpDir, 'yt-dlp.exe');
 let mainWindow;
 let loginWindow;
 let ytdlpProcess = null;
+
+const clearUpdaterCache = () => {
+  const localAppData = process.env.LOCALAPPDATA;
+  if (!localAppData) {
+    log.error("LOCALAPPDATA environment variable is not set. Cannot clear updater cache.");
+    return;
+  }
+  const updaterCacheDir = path.join(localAppData, 'youtube-downloader-updater');
+  log.info(`Checking for updater cache at: ${updaterCacheDir}`);
+  try {
+    if (fs.existsSync(updaterCacheDir)) {
+      log.info('Updater cache found. Clearing...');
+      fs.rmSync(updaterCacheDir, { recursive: true, force: true });
+      log.info('Updater cache cleared successfully.');
+    } else {
+      log.info('Updater cache directory not found, no action needed.');
+    }
+  } catch (error) {
+    log.error('Failed to clear updater cache:', error);
+  }
+};
+
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
@@ -58,6 +82,10 @@ autoUpdater.on('update-available', (info) => {
   mainWindow.webContents.send('app-update-available', info);
 });
 
+autoUpdater.on('download-progress', (progressInfo) => {
+    mainWindow.webContents.send('app-update-progress', progressInfo);
+});
+
 autoUpdater.on('update-downloaded', (info) => {
   log.info('Update downloaded.', info);
   mainWindow.webContents.send('app-update-downloaded', info);
@@ -86,7 +114,7 @@ function checkForYtdlpUpdate() {
 
     const followSumsRedirects = (url, redirectCount = 0) => {
       if (redirectCount > 10) {
-        console.error('Too many redirects while trying to fetch SHA2-256SUMS.');
+        log.error('Too many redirects while trying to fetch SHA2-256SUMS.');
         return;
       }
 
@@ -104,32 +132,36 @@ function checkForYtdlpUpdate() {
             if (exeLine) {
               const remoteHash = exeLine.trim().split(/\s+/)[0];
               if (localHash.toLowerCase() !== remoteHash.toLowerCase()) {
-                console.log(`Update available. Local: ${localHash}, Remote: ${remoteHash}`);
+                log.info(`Update available. Local: ${localHash}, Remote: ${remoteHash}`);
                 mainWindow.webContents.send('ytdlp-update-available');
               } else {
-                console.log('yt-dlp is up to date.');
+                log.info('yt-dlp is up to date.');
               }
             }
           });
         } else {
-          console.error(`Failed to get SHA2-256SUMS, status code: ${response.statusCode}`);
+          log.error(`Failed to get SHA2-256SUMS, status code: ${response.statusCode}`);
         }
       });
 
       request.on('error', (err) => {
-        console.error('Failed to download SHA2-256SUMS:', err.message);
+        log.error('Failed to download SHA2-256SUMS:', err.message);
       });
     };
 
     followSumsRedirects(sumsUrl);
 
   } catch (error) {
-    console.error('Error checking for yt-dlp update:', error.message);
+    log.error('Error checking for yt-dlp update:', error.message);
   }
 }
 
-
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  clearUpdaterCache();
+  createWindow();
+}).catch(err => {
+  log.error('Error during app startup:', err);
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -152,6 +184,10 @@ ipcMain.on('close-app', (event) => {
 
 ipcMain.on('restart-app', () => {
   autoUpdater.quitAndInstall();
+});
+
+ipcMain.on('download-app-update', () => {
+    autoUpdater.downloadUpdate();
 });
 
 

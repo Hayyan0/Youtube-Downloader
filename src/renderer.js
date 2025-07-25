@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const appUpdateNotification = document.getElementById('app-update-notification');
     const appUpdateMessage = document.getElementById('app-update-message');
+    const downloadUpdateBtn = document.getElementById('download-update-btn');
+    const laterBtn = document.getElementById('later-btn');
     const restartAppBtn = document.getElementById('restart-app-btn');
 
 
@@ -113,16 +115,35 @@ document.addEventListener('DOMContentLoaded', () => {
         window.electronAPI.send('restart-app');
     });
 
+    downloadUpdateBtn.addEventListener('click', () => {
+        window.electronAPI.send('download-app-update');
+        downloadUpdateBtn.classList.add('hidden');
+        laterBtn.classList.add('hidden');
+    });
+
+    laterBtn.addEventListener('click', () => {
+        appUpdateNotification.classList.add('hidden');
+    });
+
     typeSelect.addEventListener('change', updateQualityOptions);
 
     window.electronAPI.on('app-update-available', (info) => {
         appUpdateNotification.classList.remove('hidden');
-        appUpdateMessage.textContent = `A new version (v${info.version}) is available. Downloading...`;
+        appUpdateMessage.textContent = `A new version (v${info.version}) is available.`;
+        downloadUpdateBtn.classList.remove('hidden');
+        laterBtn.classList.remove('hidden');
+        restartAppBtn.classList.add('hidden');
+    });
+
+    window.electronAPI.on('app-update-progress', (progressInfo) => {
+        appUpdateMessage.textContent = `Downloading update... ${Math.floor(progressInfo.percent)}%`;
     });
 
     window.electronAPI.on('app-update-downloaded', (info) => {
         appUpdateNotification.classList.remove('hidden');
         appUpdateMessage.textContent = `Update v${info.version} downloaded. Restart the app to install.`;
+        downloadUpdateBtn.classList.add('hidden');
+        laterBtn.classList.add('hidden');
         restartAppBtn.classList.remove('hidden');
     });
 

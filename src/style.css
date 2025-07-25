@@ -101,7 +101,7 @@ body {
 }
 
 #app-update-notification {
-    background-color: rgba(52, 152, 219, 0.2);
+    background-color: rgba(219, 52, 52, 0.2);
     border: 1px solid var(--accent-color);
     border-radius: 7px;
     padding: 15px;
@@ -122,7 +122,7 @@ body {
 }
 
 #app-update-notification button:hover {
-    background-color: #2980b9;
+    background-color: #b92929;
 }
 
 

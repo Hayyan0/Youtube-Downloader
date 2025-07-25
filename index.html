@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Youtube Downloader</title>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+
+<body>
+
+    <div id="title-bar">
+        <div id="title">Youtube Downloader</div>
+        <div id="title-bar-btns">
+            <button id="min-btn" title="Minimize">
+                <img src="assets/minimize.svg" alt="Minimize" />
+            </button>
+            <button id="max-btn" title="Maximize">
+                <img src="assets/maximize.svg" alt="Maximize" />
+            </button>
+            <button id="close-btn" title="Close">
+                <img src="assets/Exit.svg" alt="Close" />
+            </button>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="app-update-notification" class="hidden">
+            <p id="app-update-message"></p>
+            <button id="restart-app-btn" class="hidden">Restart Now</button>
+        </div>
+        <div id="dependency-notification" class="hidden">
+            <p>The required <strong>yt-dlp.exe</strong> was not found.</p>
+            <p class="details">It's needed to download videos. Please download the latest version.</p>
+            <button id="download-dependency-btn">Download yt-dlp.exe</button>
+        </div>
+        <div id="update-notification" class="hidden">
+            <p>A new version of <strong>yt-dlp.exe</strong> is available.</p>
+            <button id="update-ytdlp-btn">Update Now</button>
+        </div>
+        <div id="main-form">
+            <div class="input-group">
+                <label for="url-input">Video/Playlist/Channel URL</label>
+                <input type="text" id="url-input" placeholder="https://www.youtube.com/...">
+            </div>
+
+            <div class="input-group">
+                <label for="type-select">Download Type</label>
+                <div class="custom-select-wrapper">
+                    <select id="type-select">
+                        <option value="video">Video</option>
+                        <option value="audio">Audio</option>
+                        <option value="thumbnail">Thumbnail</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="quality-select">Quality</label>
+                <div class="custom-select-wrapper">
+                    <select id="quality-select"></select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="output-dir">Output Directory</label>
+                <div class="path-picker">
+                    <input type="text" id="output-dir" readonly placeholder="Click 'Browse' to select a folder">
+                    <button id="browse-btn">Browse</button>
+                </div>
+            </div>
+
+            <button id="download-btn">Download</button>
+        </div>
+        <div id="progress-container" class="hidden">
+            <div class="progress-info">
+                <span id="progress-text"></span>
+                <span id="progress-details"></span>
+            </div>
+            <div class="progress-bar-outer">
+                <div id="progress-bar-inner"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="footer">
+        <p>Made with ❤️ by Hayyan</p>
+        <div class="social-icons">
+            <a href="https://github.com/Hayyan0" target="_blank" title="GitHub"><img src="./assets/github.svg" alt="GitHub"/></a>
+            <a href="https://x.com/hyn_slm" target="_blank" title="X"><img src="./assets/x.svg" alt="X"/></a>
+            <a href="https://www.instagram.com/hayansl/" target="_blank" title="Instagram"><img src="./assets/instagram.svg" alt="Instagram"/></a>
+            <a href="https://www.youtube.com/@hayyansl" target="_blank" title="YouTube"><img src="./assets/youtube.svg" alt="YouTube"/></a>
+        </div>
+    </div>
+
+    <script src="src/renderer.js"></script>
+</body>
+
+</html>

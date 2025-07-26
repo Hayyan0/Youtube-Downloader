@@ -4,11 +4,6 @@
   <img src="Repo/Icon.png" alt="Youtube Downloader Logo" width="128" height="128">
 </p>
 
-<p align="center">
-  <a href="https://www.buymeacoffee.com/Hayyan" target="_blank">
-    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
-  </a>
-</p>
 
 A modern desktop application for downloading videos, audio, and thumbnails from YouTube with a clean user interface.
 
@@ -53,7 +48,11 @@ Having issues? Please check out:
 ## Credits
 
 Made with ❤️ by [Hayyan](https://github.com/Hayyan0)
-
+<p align="left">
+  <a href="https://www.buymeacoffee.com/Hayyan" target="_blank">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
+  </a>
+</p>
 ## License
 
 ISC License

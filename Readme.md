@@ -4,13 +4,15 @@
   <img src="Repo/Icon.png" alt="Youtube Downloader Logo" width="128" height="128">
 </p>
 
+<p align="center">
+  <a href="https://www.buymeacoffee.com/Hayyan" target="_blank">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
+  </a>
+</p>
+
 A modern desktop application for downloading videos, audio, and thumbnails from YouTube with a clean user interface.
 
 ![App Screenshot](Repo/Screenshot.png)
-
-<p align="center">
-  <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="Hayyan" data-color="#FFDD00" data-emoji="🖤"  data-font="Cookie" data-text="Donate" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>
-</p>
 
 ## Features
 

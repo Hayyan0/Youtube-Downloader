@@ -31,10 +31,11 @@
             <button id="later-btn" class="hidden">Later</button>
             <button id="restart-app-btn" class="hidden">Restart Now</button>
         </div>
+        <!-- Modified Dependency Notification -->
         <div id="dependency-notification" class="hidden">
-            <p>The required <strong>yt-dlp.exe</strong> was not found.</p>
-            <p class="details">It's needed to download videos. Please download the latest version.</p>
-            <button id="download-dependency-btn">Download yt-dlp.exe</button>
+            <p id="dependency-message">The required dependencies were not found.</p>
+            <p id="dependency-details" class="details">They are needed to download videos. Please download them.</p>
+            <button id="download-dependencies-btn">Download Dependencies</button>
         </div>
         <div id="update-notification" class="hidden">
             <p>A new version of <strong>yt-dlp.exe</strong> is available.</p>

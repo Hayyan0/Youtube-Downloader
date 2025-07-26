@@ -1,6 +1,6 @@
 {
   "name": "youtube-downloader",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "A simple youtube downloader",
   "main": "src/main.js",
   "scripts": {
@@ -19,7 +19,8 @@
   "dependencies": {
     "electron-log": "^5.1.2",
     "electron-store": "^8.1.0",
-    "electron-updater": "^6.1.7"
+    "electron-updater": "^6.1.7",
+    "extract-zip": "^2.0.1"
   },
   "build": {
     "appId": "com.hayyan.youtubedownloader",

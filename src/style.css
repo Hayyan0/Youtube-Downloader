@@ -32,6 +32,8 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 #title-bar {
@@ -367,6 +369,8 @@ button:disabled {
     border-radius: 7px;
     padding: 15px;
     border: 1px solid var(--border-color);
+    user-select: auto;
+    -webkit-user-drag: auto;
 }
 
 .progress-info {

@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressDetails = document.getElementById('progress-details');
 
     const dependencyNotification = document.getElementById('dependency-notification');
-    const downloadDependencyBtn = document.getElementById('download-dependency-btn');
+    const dependencyMessage = document.getElementById('dependency-message');
+    const dependencyDetails = document.getElementById('dependency-details');
+    const downloadDependenciesBtn = document.getElementById('download-dependencies-btn');
     const mainForm = document.getElementById('main-form');
 
     const ytdlpUpdateNotification = document.getElementById('update-notification');
@@ -28,8 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const laterBtn = document.getElementById('later-btn');
     const restartAppBtn = document.getElementById('restart-app-btn');
 
-
     let downloadState = { mode: 'unknown', totalParts: 1, currentPart: 1 };
+    let lastDownloadArgs = null;
+    let isDownloading = false;
 
     const qualityOptions = {
         video: {
@@ -62,12 +65,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetDownloadUI() {
+        isDownloading = false;
         downloadBtn.disabled = false;
         downloadBtn.textContent = 'Download';
         progressBar.style.backgroundColor = 'var(--accent-color)';
         if (!progressDetails.innerHTML.includes('Sign In')) {
             setTimeout(() => {
-                if (!downloadBtn.disabled) {
+                if (!isDownloading) {
                     progressContainer.classList.add('hidden');
                 }
             }, 3000);
@@ -80,35 +84,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     downloadBtn.addEventListener('click', () => {
-        const url = urlInput.value;
-        const type = typeSelect.value;
-        const quality = qualitySelect.value;
-        const outputDir = outputDirInput.value;
+        if (isDownloading) {
+            window.electronAPI.send('cancel-download');
+            downloadBtn.textContent = 'Cancelling...';
+            downloadBtn.disabled = true;
+        } else {
+            const url = urlInput.value;
+            const type = typeSelect.value;
+            const quality = qualitySelect.value;
+            const outputDir = outputDirInput.value;
 
-        if (!url.trim() || !outputDir.trim()) {
-            alert('Please provide a valid URL and select an output directory.');
-            return;
+            if (!url.trim() || !outputDir.trim()) {
+                alert('Please provide a valid URL and select an output directory.');
+                return;
+            }
+
+            lastDownloadArgs = { url, type, quality, outputDir };
+            downloadState = { mode: 'unknown', totalParts: 1, currentPart: 1 };
+
+            progressContainer.classList.remove('hidden');
+            progressBar.style.backgroundColor = 'var(--accent-color)';
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+            progressDetails.textContent = 'Initializing...';
+            
+            isDownloading = true;
+            downloadBtn.textContent = 'Cancel';
+            downloadBtn.disabled = false;
+
+            window.electronAPI.send('start-download', lastDownloadArgs);
         }
-
-        downloadState = { mode: 'unknown', totalParts: 1, currentPart: 1 };
-
-        progressContainer.classList.remove('hidden');
-        progressBar.style.width = '0%';
-        progressText.textContent = '0%';
-        progressDetails.textContent = 'Initializing...';
-        downloadBtn.disabled = true;
-        downloadBtn.textContent = 'Downloading...';
-
-        window.electronAPI.send('start-download', { url, type, quality, outputDir });
     });
 
-    downloadDependencyBtn.addEventListener('click', () => {
-        window.electronAPI.send('download-ytdlp');
+    downloadDependenciesBtn.addEventListener('click', () => {
+        window.electronAPI.send('download-dependencies');
     });
 
     updateYtdlpBtn.addEventListener('click', () => {
         ytdlpUpdateNotification.classList.add('hidden');
-        window.electronAPI.send('download-ytdlp');
+        window.electronAPI.send('download-dependencies');
     });
 
     restartAppBtn.addEventListener('click', () => {
@@ -147,12 +161,25 @@ document.addEventListener('DOMContentLoaded', () => {
         restartAppBtn.classList.remove('hidden');
     });
 
+    window.electronAPI.on('dependencies-status', ({ ytdlp, ffmpeg }) => {
+        const bothMissing = !ytdlp && !ffmpeg;
+        const ytdlpMissing = !ytdlp && ffmpeg;
+        const ffmpegMissing = ytdlp && !ffmpeg;
 
-    window.electronAPI.on('ytdlp-status', ({ found }) => {
-        if (found) {
+        if (ytdlp && ffmpeg) {
             dependencyNotification.classList.add('hidden');
             setFormEnabled(true);
         } else {
+            if (bothMissing) {
+                dependencyMessage.innerHTML = `<strong>yt-dlp.exe</strong> and <strong>FFmpeg</strong> are missing.`;
+                dependencyDetails.textContent = `These are required to download and merge videos.`;
+            } else if (ytdlpMissing) {
+                dependencyMessage.innerHTML = `The required <strong>yt-dlp.exe</strong> was not found.`;
+                dependencyDetails.textContent = `It's needed to download videos.`;
+            } else if (ffmpegMissing) {
+                dependencyMessage.innerHTML = `The required <strong>FFmpeg</strong> was not found.`;
+                dependencyDetails.textContent = `It's needed for merging video and audio files.`;
+            }
             dependencyNotification.classList.remove('hidden');
             setFormEnabled(false);
         }
@@ -162,41 +189,45 @@ document.addEventListener('DOMContentLoaded', () => {
         ytdlpUpdateNotification.classList.remove('hidden');
     });
 
-
-    window.electronAPI.on('ytdlp-dependency-download-start', () => {
+    window.electronAPI.on('dependencies-download-start', (message) => {
         progressContainer.classList.remove('hidden');
         progressBar.style.backgroundColor = 'var(--accent-color)';
+        progressBar.style.width = '0%';
         progressText.textContent = '0%';
-        progressDetails.textContent = 'Downloading yt-dlp.exe...';
-        downloadDependencyBtn.disabled = true;
-        downloadDependencyBtn.textContent = 'Downloading...';
+        progressDetails.textContent = message || 'Downloading dependencies...';
+        downloadDependenciesBtn.disabled = true;
+        downloadDependenciesBtn.textContent = 'Downloading...';
         updateYtdlpBtn.disabled = true;
         updateYtdlpBtn.textContent = 'Updating...';
     });
 
-    window.electronAPI.on('ytdlp-dependency-download-progress', (progress) => {
-        progressBar.style.width = `${progress}%`;
-        progressText.textContent = `${progress.toFixed(1)}%`;
+    window.electronAPI.on('dependencies-download-progress', ({ percent, details }) => {
+        progressBar.style.width = `${percent}%`;
+        progressText.textContent = `${percent.toFixed(1)}%`;
+        if (details) {
+            progressDetails.textContent = details;
+        }
     });
 
-    window.electronAPI.on('ytdlp-dependency-download-finished', () => {
-        progressDetails.textContent = 'yt-dlp downloaded successfully! ✅';
-        downloadDependencyBtn.disabled = false;
-        downloadDependencyBtn.textContent = 'Download yt-dlp.exe';
+    window.electronAPI.on('dependencies-download-finished', () => {
+        progressDetails.textContent = 'Dependencies downloaded successfully! ✅';
+        downloadDependenciesBtn.disabled = false;
+        downloadDependenciesBtn.textContent = 'Download Dependencies';
         updateYtdlpBtn.disabled = false;
         updateYtdlpBtn.textContent = 'Update Now';
         ytdlpUpdateNotification.classList.add('hidden');
         setTimeout(() => progressContainer.classList.add('hidden'), 3000);
     });
 
-    window.electronAPI.on('ytdlp-dependency-download-error', (error) => {
-        progressDetails.textContent = `Error downloading yt-dlp: ${error}`;
+    window.electronAPI.on('dependencies-download-error', (error) => {
+        progressDetails.textContent = `Error downloading dependencies: ${error}`;
         progressBar.style.backgroundColor = 'var(--error-color)';
-        downloadDependencyBtn.disabled = false;
-        downloadDependencyBtn.textContent = 'Download yt-dlp.exe';
+        downloadDependenciesBtn.disabled = false;
+        downloadDependenciesBtn.textContent = 'Download Dependencies';
         updateYtdlpBtn.disabled = false;
         updateYtdlpBtn.textContent = 'Update Now';
     });
+
 
     window.electronAPI.on('ytdlp-output', (data) => {
         const lines = data.split('\r');
@@ -254,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.electronAPI.on('download-finished', (code) => {
+        isDownloading = false;
         if (progressDetails.innerHTML.includes('Sign In')) {
             resetDownloadUI();
             return;
@@ -265,14 +297,23 @@ document.addEventListener('DOMContentLoaded', () => {
             progressDetails.textContent = 'Download completed successfully! ✅';
         } else {
             if (!progressDetails.textContent.startsWith('Error:')) {
-                progressDetails.textContent = `Download failed (code ${code}).`;
+                progressDetails.textContent = `Download failed (code ${code}). Check for errors.`;
             }
             progressBar.style.backgroundColor = 'var(--error-color)';
         }
         resetDownloadUI();
     });
+    
+    window.electronAPI.on('download-cancelled', () => {
+        isDownloading = false;
+        progressDetails.textContent = 'Download cancelled.';
+        progressBar.style.width = '0%';
+        progressBar.style.backgroundColor = 'var(--error-color)';
+        resetDownloadUI();
+    });
 
     window.electronAPI.on('ytdlp-cookie-error', () => {
+        isDownloading = false;
         progressContainer.classList.remove('hidden');
         progressBar.style.width = '100%';
         progressBar.style.backgroundColor = 'var(--error-color)';
@@ -286,9 +327,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.electronAPI.on('login-complete', () => {
-        progressDetails.textContent = 'Sign-in complete. Please try the download again.';
-        downloadBtn.disabled = false;
-        downloadBtn.textContent = 'Download';
+        progressContainer.classList.remove('hidden');
+        progressBar.style.backgroundColor = 'var(--accent-color)';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+        progressDetails.textContent = 'Sign-in complete. Retrying download...';
+
+        if (lastDownloadArgs) {
+            isDownloading = true;
+            downloadBtn.textContent = 'Cancel';
+            downloadBtn.disabled = false;
+            window.electronAPI.send('start-download', lastDownloadArgs);
+        } else {
+            progressDetails.textContent = 'Error: Could not retry download. Please start a new one.';
+            resetDownloadUI();
+        }
     });
 
     function createCustomSelect(wrapper) {

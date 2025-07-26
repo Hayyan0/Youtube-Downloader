@@ -8,6 +8,10 @@ A modern desktop application for downloading videos, audio, and thumbnails from 
 
 ![App Screenshot](Repo/Screenshot.png)
 
+<p align="center">
+  <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="Hayyan" data-color="#FFDD00" data-emoji="🖤"  data-font="Cookie" data-text="Donate" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>
+</p>
+
 ## Features
 
 - 🎥 **Video Downloads**
@@ -37,12 +41,6 @@ A modern desktop application for downloading videos, audio, and thumbnails from 
 1. Download the latest release from the [Releases](https://github.com/Hayyan0/Youtube-Downloader/releases) page
 2. Run the installer
 3. Launch Youtube Downloader
-
-## Requirements
-
-- Windows 7 or later
-- Internet connection
-- 100MB disk space
 
 ## Support
 

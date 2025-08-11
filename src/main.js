@@ -335,20 +335,15 @@ async function downloadFile(win, url, savePath, progressDetails) {
     });
   });
 }
-
 ipcMain.on('download-dependencies', async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   win.webContents.send('dependencies-download-start', 'Starting dependency download...');
 
   try {
-    const ytdlpExists = fs.existsSync(localYtdlpPath);
     const ffmpegExists = fs.existsSync(localFfmpegPath);
-
-    if (!ytdlpExists) {
-      const ytdlpDownloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
-      if (!fs.existsSync(localYtdlpDir)) fs.mkdirSync(localYtdlpDir, { recursive: true });
-      await downloadFile(win, ytdlpDownloadUrl, localYtdlpPath, 'Downloading yt-dlp.exe...');
-    }
+    const ytdlpDownloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+    if (!fs.existsSync(localYtdlpDir)) fs.mkdirSync(localYtdlpDir, { recursive: true });
+    await downloadFile(win, ytdlpDownloadUrl, localYtdlpPath, 'Downloading yt-dlp.exe...');
 
     if (!ffmpegExists) {
       const ffmpegDownloadUrl = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip';

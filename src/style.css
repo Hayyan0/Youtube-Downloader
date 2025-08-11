@@ -487,3 +487,10 @@ button:disabled {
     transform: scale(1.15);
     opacity: 1;
 }
+
+.flag-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    margin-left: 5px;
+}

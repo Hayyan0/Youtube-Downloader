@@ -406,9 +406,8 @@ ipcMain.on('cancel-download', () => {
   }
 });
 
-
-ipcMain.on('start-download', (event, { url, type, quality, outputDir }) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
+function executeDownload(win, downloadArgs, isRetry = false) {
+  const { url, type, quality, outputDir } = downloadArgs;
 
   if (!fs.existsSync(ytdlpPath) || !fs.existsSync(ffmpegPath)) {
     win.webContents.send('ytdlp-output', `[FATAL] Dependencies missing.`);
@@ -450,9 +449,16 @@ ipcMain.on('start-download', (event, { url, type, quality, outputDir }) => {
     commonArgs.push('--cookies', cookiePath);
   }
 
+  let initialArgs = [];
+  if (isRetry) {
+    log.info('This is a retry attempt. Adding --proxy "" flag to the beginning of the command.');
+    initialArgs = ['--proxy', ''];
+  }
+
   switch (type) {
     case 'video':
       args = [
+        ...initialArgs,
         '-f', quality,
         '--merge-output-format', 'mp4',
         '--ffmpeg-location', path.dirname(ffmpegPath),
@@ -462,6 +468,7 @@ ipcMain.on('start-download', (event, { url, type, quality, outputDir }) => {
       break;
     case 'audio':
       args = [
+        ...initialArgs,
         '-x', '--audio-format', 'mp3',
         '--audio-quality', quality,
         '--ffmpeg-location', path.dirname(ffmpegPath),
@@ -471,15 +478,20 @@ ipcMain.on('start-download', (event, { url, type, quality, outputDir }) => {
       break;
     case 'thumbnail':
       const thumbBaseArgs = commonArgs.filter(arg => arg !== '--progress');
-      args = ['--write-thumbnail', '--skip-download', ...thumbBaseArgs, url];
+      args = [...initialArgs, '--write-thumbnail', '--skip-download', ...thumbBaseArgs, url];
       break;
   }
+  // ** END: Corrected Logic **
 
   if (ytdlpProcess) {
     ytdlpProcess.kill();
   }
 
+  log.info(`Spawning yt-dlp with args: ${args.join(' ')}`);
   ytdlpProcess = spawn(ytdlpPath, args);
+
+  let proxyErrorDetected = false;
+  const shouldRetryOnProxyError = !isRetry;
 
   const stdHandler = (data) => {
     const output = data.toString();
@@ -514,6 +526,15 @@ ipcMain.on('start-download', (event, { url, type, quality, outputDir }) => {
   const rlErr = readline.createInterface({ input: ytdlpProcess.stderr });
   rlErr.on('line', (line) => {
     const errorLine = line.toLowerCase();
+
+    if (shouldRetryOnProxyError && errorLine.includes('unable to connect to proxy') && errorLine.includes('actively refused it')) {
+        proxyErrorDetected = true;
+        log.warn('Proxy connection error detected. Terminating process to retry without proxy.');
+        win.webContents.send('ytdlp-output', '[INFO] Proxy error detected. Retrying download...');
+        if (ytdlpProcess) ytdlpProcess.kill();
+        return;
+    }
+
     if (errorLine.includes('private video') || errorLine.includes('login to view this video') || errorLine.includes('sign in')) {
       win.webContents.send('ytdlp-cookie-error');
       if (ytdlpProcess) ytdlpProcess.kill();
@@ -522,6 +543,12 @@ ipcMain.on('start-download', (event, { url, type, quality, outputDir }) => {
   });
 
   ytdlpProcess.on('close', (code) => {
+    if (proxyErrorDetected) {
+      log.info('Process closed due to proxy error. Initiating retry.');
+      executeDownload(win, downloadArgs, true);
+      return;
+    }
+
     if (wasManuallyCancelled) {
       log.info('Download was cancelled by user. Cleaning up files and suppressing "download-finished" event.');
 
@@ -559,4 +586,9 @@ ipcMain.on('start-download', (event, { url, type, quality, outputDir }) => {
     win.webContents.send('download-finished', 1);
     ytdlpProcess = null;
   });
+}
+
+ipcMain.on('start-download', (event, downloadArgs) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  executeDownload(win, downloadArgs, false);
 });
